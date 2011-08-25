@@ -22,3 +22,34 @@ let two_power_8 = mult two three g 1.0;;
 (* 2 ^ (3 ^ 2) *)
 let two_power_9 = mult three two g 1.0;;
 
+let inleft = fun x -> fun f -> fun g -> f x;;
+let inright = fun x -> fun f -> fun g -> g x;;
+let case = fun f -> fun g -> fun z -> z f g;;
+
+let f = fun x -> x + 1.0;;
+case f g (inleft 3.0);;
+case f g (inright 3.3);;
+
+let rec whileDo b c = 
+   if b 
+   then (c; whileDo b c)
+   else ()
+   ;; 
+
+let factorial n =
+  let i = Ref n in
+    let result = Ref 1 in  
+    whileDo (!i > 0) (result = !result * !i; i = !i - 1);
+	!result
+  ;;
+  
+  let factorial2 n = 
+let x = Ref n in
+let res = Ref 1 in 
+while (!x > 1) do (
+  res = !res * !x; x = !x - 1
+	);
+!res
+;;
+ 
+                    
