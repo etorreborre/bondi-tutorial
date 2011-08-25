@@ -1,0 +1,24 @@
+let zero = fun f -> fun x -> x;;
+
+let successor = fun n -> fun f -> fun x -> (n f)(f x);;
+
+let one = successor zero;;
+let two = successor one;;
+let three = successor two;;
+
+let g = fun x -> x * 2.0;;
+let two_power_3 = three g 1.0;;
+
+let add = fun n -> fun m -> fun f -> fun x -> (m f) (n f x);;
+
+(* 2 ^ (2 + 3) *)
+let two_power_5 = add two three g 1.0;;
+let two_power_five = add three two g 1.0;;
+
+let mult = fun n -> fun m -> fun f -> fun x -> (m n f x);;
+
+(* 2 ^ (2 ^ 3) *)
+let two_power_8 = mult two three g 1.0;;
+(* 2 ^ (3 ^ 2) *)
+let two_power_9 = mult three two g 1.0;;
+
