@@ -1,0 +1,164 @@
+(* examples from 
+
+	Recent Advances in Software Engineering
+	Lecture 1 
+*)
+
+(* 
+%open "pwp01.bon";;
+*)
+
+
+
+(* an abstract  datatype of salaries *) 
+
+datatype Salary = Salary of Float ;;
+
+(* a pattern-matching function for changing a salary *) 
+
+let incrSalary f = | Salary s -> Salary (f s);;
+
+(* an example *) 
+
+let small x = x * 1.02 ;;
+
+incrSalary small (Salary 2.0);;
+
+
+(* a class of names *) 
+
+class Name2 {
+name : String;
+get_name = { |() -> !this.name} 
+set_name = { fun n -> this.name = n} 
+}
+
+
+class Employee2 extends Name2 {
+salary : Salary;
+get_salary = { | () -> !this.salary}
+set_salary = { fun s -> this.salary = s }
+incrSalary2 = { fun f -> 
+	this.salary = incrSalary f (this.get_salary())}
+}
+
+(* an example *) 
+
+let e1 = new Employee2 ;; 
+e1.set_name "b1";
+e1.set_salary(Salary 2.00)
+;;
+ 
+e1;;
+
+e1.get_name();;
+e1.get_salary();;
+
+
+(* pattern-matching with two cases  *) 
+
+let (incrAnyEmpSalary2 : (Float -> Float) -> a -> Unit) f = 
+| (x : Employee2[a]) ->  x.incrSalary2(f)
+| x -> ()
+;;
+
+
+(* incrAnyEmpSalary2 acts on employees ... *) 
+
+e1.get_salary();;
+incrAnyEmpSalary2 small e1;
+e1.get_salary();;
+
+
+(* ... but ognores anything else  ... *) 
+
+incrAnyEmpSalary2 small 5;;
+incrAnyEmpSalary2 small [e1];;
+
+
+(* iter applies a command to all components of a data structure *) 
+
+iter;;
+
+let incrAllEmpSalary2 f = iter (incrAnyEmpSalary2 f);;
+
+
+(* the following example finds e1 in the list  *) 
+
+incrAllEmpSalary2 small [e1];;
+e1.get_salary();;
+
+
+(* now let's put the employees in a larger context *) 
+
+(* Here is a sub-class of managers *) 
+
+class Manager2 extends Employee2 { 
+bonus : Salary;
+get_bonus = { | () -> !this.bonus}
+set_bonus = { fun s -> this.bonus = s }
+incrSalary2 = { fun f -> 
+	super.incrSalary2(f);
+	this.bonus = incrSalary f (this.get_bonus())}
+}
+
+(* employees and managers may be  in departments *) 
+
+class Department2 extends Name2 { 
+employees : List (Employee2[Top]) ;
+manager : Manager2 [Top];
+get_employees = { | () -> !this.employees}
+set_employees = { fun es -> this.employees = es }
+get_manager = { | () -> !this.manager}
+set_manager = { fun s -> this.manager = s }
+deptSalary = { |() -> 
+	let add_sal x y = x+ (y.get_salary()) in 
+        foldleft add_sal ((this.get_manager()).get_salary()) (this.get_employees())}
+}
+
+(* departments may be in companies *) 
+
+class Company2 extends Name2 {
+departments : List (Department2 [Top]) ;
+get_departments = { | () -> !this.departments}
+set_departments = { fun ds -> this.departments = ds }
+compSalary = { |() -> 
+	let add_sal x y = x+ (y.deptSalary()) in 
+        foldleft add_sal (Salary 0.0) (this.get_departments())}
+
+}
+
+(* the example *) 
+
+let mycorp2 = 
+
+let e1 = new Employee2 in 
+e1.set_name "b1";
+e1.set_salary(Salary 2.00); 
+let e2 = new Employee2 in 
+e2.set_name "b2";
+e2.set_salary (Salary 4.00); 
+let m1 = new Manager2 in 
+m1.set_name "m1";
+m1.set_salary (Salary 6.00); 
+m1.set_bonus (Salary 2.00);
+let m2 = new Manager2 in 
+m2.set_name "m2";
+m2.set_salary (Salary 6.00); 
+m2.set_bonus (Salary 2.00);
+let dept1 = new Department2 in 
+dept1.set_name "dept1" ;
+dept1.set_employees [(e1:Employee2[Top]),(e2:Employee2[Top])];  
+dept1.set_manager m1;
+let dept2 = new Department2 in 
+dept2.set_name "dept2" ;
+dept2.set_employees ; 
+dept2.set_manager m2;
+let mycorp = new Company2 in 
+mycorp.set_name "mycorp" ;
+mycorp.set_departments [(dept1:Department2[Top]),(dept2:Department2[Top])]; 
+mycorp;;
+
+mycorp2.compSalary();;
+incrAllEmpSalary2 (fun x -> 1.02*x) mycorp2;;
+mycorp2.compSalary();;

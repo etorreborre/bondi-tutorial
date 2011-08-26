@@ -36,13 +36,13 @@ let rec (whileDo: Bool -> (Unit -> Unit) -> Unit) b c =
    else ()
    ;; 
 
-  let factorial n = 
-   let x = Ref n in
-    let res = Ref 1 in 
-    while (!x > 1) do (
-      res = !res * !x; x = !x - 1
-	);
-    !res
+let factorial n = 
+ let x = Ref n in
+  let res = Ref 1 in 
+  while (!x > 1) do (
+    res = !res * !x; x = !x - 1
+  );
+  !res
 ;;
 
 

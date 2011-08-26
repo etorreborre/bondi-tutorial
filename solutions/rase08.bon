@@ -1,0 +1,500 @@
+
+(*
+%open "../rase/rase08.bon";;
+*)
+
+
+(* classes *) 
+
+
+class Name [a] { 
+name : String;
+get_name = { | () -> !this.name }
+set_name = { fun n -> this.name = n }
+with
+add_case toString (Name x y) = fun b -> !y
+}
+
+(* Class syntax is quite similar to that of Java. 
+
+Name is the name of the class 
+
+[a] is its type parameter. Among other things, it indicates that the
+class is not final.
+
+Fields are given by their name, a colon, and their type. 
+
+Methods are given by their name, an equals sign, and then the method
+body, enclosed in braces. 
+
+@with@ indicates that modifications to global functions follow. 
+
+@add_case@ adds a case to an existing function, in this case, @toString@. 
+
+*)
+
+
+new Name[];;
+
+(* 
+produces
+it: Name[]
+it = void
+
+Name[] is the same as Name[Unit]. Since no name field has been
+assigned the value (computed using @toString@) returns @void@. 
+
+*)
+
+
+
+
+let fred = new Name[] in 
+fred.set_name("Fred");
+fred;;
+
+(* 
+returns 
+
+it: Name[]
+it = Fred
+*)
+
+
+let fred = new Name[] in 
+fred.set_name "Fred";
+fred.get_name();;
+
+(* returns
+it: String
+it = "Fred"
+
+Note that the type and result are  different from before.
+*)
+ 
+
+
+(* attributes are not programs 
+
+name;;
+
+but can be turned into functions, as in 
+*)
+
+let nameName (x:Name [a]) = x.name;;
+(* returns 
+nameName: Name[a] -> ref String
+
+ref String is the type of *references* to strings. References can be assigned using "=" and de-referenced, using ! For example
+*)
+
+let x = Ref 3 in x = !x +1 ; !x;;
+(*
+it: Int
+it = 4
+*)
+
+let aboutName (x:Name [a]) = !x.name ^ " is the name";;
+
+let fred = new Name[] in 
+fred.set_name "Fred";
+aboutName fred;;
+
+
+(* A richer example *) 
+
+
+
+class Person [a] {
+name : String;
+position : Int;
+friends : List (Person [Top]);
+get_name = { | () -> !this.name }
+set_name  = { fun n -> this.name = n }
+get_position = { | () -> !this.position }
+set_position = { fun p -> this.position = p }
+get_friends = { | () -> !this.friends }
+set_friends = { fun p -> this.friends = p }
+move = { fun d -> this.set_position (this.get_position() + d) }
+moveClone = { fun d -> 
+        let res = clone this in
+        res.set_position (this.get_position() + d);
+        res }
+closer  = { | (x: Person [b]) -> 
+if this.get_position() <=  x.get_position()
+then (this : Person [Top])
+else (x : Person [Top])
+}
+with 
+add_case toString (x:Person[a]) = fun b -> x.get_name ()
+}
+
+(* returns 
+
+class Person
+  has constructor
+Person: a -> ref String * ref Int * ref (List Person[Top]) -> Person[a]
+  and attributes:
+name: Person[b] -> ref String
+position: Person[c] -> ref Int
+friends: Person[d] -> ref (List Person[Top])
+get_name: Person[e] -> Unit -> String
+set_name: Person[f] -> String -> Unit
+get_position: Person[g] -> Unit -> Int
+set_position: Person[h] -> Int -> Unit
+get_friends: Person[i] -> Unit -> List Person[Top]
+set_friends: Person[j] -> List Person[Top] -> Unit
+move: Person[k] -> Int -> Unit
+moveClone: Person[l] -> Int -> Person[l]
+closer: Person[Top] -> Person[Top] -> Person[Top]
+toString: Person[m] -> Bool -> String
+
+*)
+
+
+let homer = new Person[];;
+homer.set_name("Homer"); 
+homer.set_position(5);
+homer.set_friends([]);
+homer.move 3;
+(homer,homer.get_position())
+;;
+
+(* returns
+it: Person[] * Int
+it = (Homer,8)
+*)
+
+(* the type of friends is interesting. It is a list of persons, but
+the parameter a has been replaced by the largest type, Top. That is,
+friends can be any sort of people. There is more on this below. *)
+
+
+
+(* 
+Now the method "name" has been overloaded. In particular, 
+
+
+let n1Name x = x.name;;
+
+produces an error. Is x a Name or a Person? 
+
+*) 
+
+let nName (x:Name[a]) = x.name;;
+let personName (x: Person[a]) = x.name;;
+
+(* The *internal* type of "name" is a *choice type* 
+
+Person [a] -> ref String  & Name [b] -> ref String 
+
+Since nothing can be both a person and a name, there is no ambiguity
+about this overloaded method.
+
+*) 
+
+
+
+(* sub-classes *) 
+
+class ProperPerson[a] extends Person { 
+proper : String;
+get_proper = { | () -> !this.proper }
+set_proper  = { fun n -> this.proper = n }
+get_name = { | () -> super.get_name() ^ " " ^ (this.get_proper()) }
+}
+
+(* returns
+class ProperPerson
+  has constructor
+ProperPerson: a -> ref String -> ProperPerson a
+  and attributes:
+proper: ProperPerson[b] -> ref String
+get_proper: ProperPerson[c] -> Unit -> String
+set_proper: ProperPerson[d] -> String -> Unit
+get_name: ProperPerson[e] -> Unit -> String
+
+
+The display shows all of the new attributes, and the old methods that
+have been specialised, in this case get_name.
+
+*) 
+
+
+let barry = new ProperPerson[];;
+barry.set_name("Barry") ;
+barry.set_position(0);
+barry.set_proper("Jay");
+barry;;
+
+(* binary methods *) 
+
+
+homer.closer(barry);;
+
+(* returns 
+it: Person[Top]
+it = Barry Jay
+
+Note how closer takes an argument of type Person [b] not Person
+[a]. It is illegal for different arguments to share this type
+variable. Note, too that the result is of type Person [Top] as this
+type is hared by both Person [a] and Person [b]
+
+*) 
+
+
+
+(* THE BIGGEST POINT OF ALL !
+
+A proper person is a person 
+
+*) 
+
+(| Person _ _ -> True) barry;;
+
+(* This is how inheritance is managed. *) 
+
+(| Person (ProperPerson _ _) _ -> "proper person" 
+ | Person _ _ -> "person" ) barry ;;
+
+(| Person (ProperPerson _ _) _ -> "proper person" 
+ | Person _ _ -> "person" ) homer;;
+
+(* 
+The typing is handled similarly. The type 
+Properperson [a] is exactly  Person (ProperPerson a)
+*)
+(* the following typings are all the same *)
+
+barry : ProperPerson[];;
+barry : ProperPerson [Unit];;
+barry : Person (ProperPerson Unit);;
+
+
+(* but 
+
+barry : ProperPerson Unit;;
+type error: Person and ProperPerson don't match
+
+is an error since barry is first a person, and then proper. 
+*)
+
+
+(* dynamic dispatch *) 
+
+
+let  mary = new Person[];;
+mary.set_name ("Mary") ;
+mary.set_position 1;
+mary.set_friends [(homer:Person[Top]),barry];
+let f x (y: Person [a]) = x ^ y.get_name() ^ ", " in 
+mary.get_name() ^ " knows " ^(foldleft f "" (mary.get_friends()));;
+
+(* returns 
+
+it: String
+it = "Mary knows Homer, Barry Jay, 
+
+Note how homer and barry have different types, but both are of type
+Person [Top].  Type inference needs some help here, so that the
+correct list type is inferred. Note how the polymorphism of foldleft
+combines with that of sub-typing here.
+
+*) 
+
+
+
+
+
+(* iterated sub-classes *) 
+
+class Employee[a] extends ProperPerson {
+salary : Float ;
+get_salary = { |() -> !this.salary} 
+set_salary = { fun s -> this.salary = s} 
+update_salary = { fun p -> this.salary = !this.salary * (1.0 + p) } 
+}
+
+| (x: Employee[a]) -> x.get_salary();;
+
+
+let busy = new Employee[];;
+busy.set_name("busy");
+busy.set_proper("beaver");
+busy.set_salary(2.00);
+busy.set_position(7);
+busy;;
+
+
+class Manager[a] extends Employee {
+department : String;
+bonus : Float ;
+get_department = { | () -> !this.department }
+set_department  = { fun n -> this.department = n }
+get_bonus = { | () -> !this.bonus }
+set_bonus  = { fun n -> this.bonus = n }
+update_salary = { fun p -> 
+	super.update_salary(p);
+	this.bonus = !this.bonus * (1.0 + p) }
+}
+
+
+let lazy = new Manager[];;
+lazy.set_name("Lazy");
+lazy.set_proper("B");
+lazy.set_salary(4.00);
+lazy.set_department("dep1");
+lazy.set_bonus(1.00);
+lazy.update_salary(0.05);
+(lazy,lazy.get_salary(),lazy.get_bonus());;
+
+
+
+class Department [a] {
+name : String ;
+manager : Manager [Top] ;
+employees : List (Employee[Top]);
+get_name = { |() -> !this.name} 
+set_name = { fun s -> this.name = s} 
+get_manager = { |() -> !this.manager} 
+set_manager = { fun s -> this.manager = s} 
+get_employees = { |() -> !this.employees} 
+set_employees = { fun s -> this.employees = s} 
+with
+add_case toString (x: Department [a]) = | _ -> x.get_name()
+}
+
+let dep1 = new Department[];;
+dep1.set_name("dep1") ;
+dep1.set_manager(lazy );
+dep1.set_employees([busy]);
+dep1;;
+
+(* this acts on both the manager and the employees *) 
+
+let (update_any_salary: Float -> a -> Unit) p = 
+| (x: Employee[a]) -> x.update_salary(p)
+| x -> () 
+;;
+
+(* iter is like apply2all but performs actions *) 
+
+iter;;
+(* 
+it: all a.(a -> Unit) -> b -> Unit
+*) 
+
+map (fun (x:Employee[a]) -> (x,x.get_salary())) (dep1.get_employees());;
+ (dep1.get_manager()).get_bonus();;
+iter (update_any_salary 0.5) dep1;
+map (fun (x:Employee[a]) -> (x,x.get_salary())) (dep1.get_employees());;
+ (dep1.get_manager()).get_bonus();;
+
+(* this example shows how iterating update_any_salary will increase
+salaries wherever they are found, and use methods appropriately
+too. It employs:
+
+ - parametric polymorphism (map,iter)
+ - structure polymorphism (map) 
+ - path polymorphism (iter)
+ - sub-type polymorphism (update_salary) 
+
+No pattern polymorphism today, but soon. 
+*) 
+
+
+
+(* sub-typing in type specialisation  *) 
+
+(* so far, specialised methods have always had the same return type *) 
+
+
+class Point [a] {
+x_coord : Float;
+y_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+get_y_coord = { |() -> !this.y_coord }
+set_y_coord  = { fun d -> this.y_coord =  d }
+is_good = { this.get_x_coord() >= 0.0 }
+with 
+add_case toString (Point z (x,y))  = fun b -> "Point("^ (toString !x False) ^ "," ^(toString !y False)^ ")" 
+ }
+
+
+datatype Colour = Colour of Int  
+with add_case toString (Colour x) = fun b -> 
+(| 1 -> "red"
+| 2 -> "green"
+| 3 -> "blue"
+| y -> "Colour "^(toString y False))
+x
+;;
+let red = Colour 1;;
+let green = Colour 2 ;;
+let blue = Colour 3;;
+
+class ColourPoint [a] extends Point {
+colour : Colour;
+get_colour = { |() -> !this.colour }
+set_colour = { fun x -> this.colour = x }
+with
+add_case toString (x: ColourPoint [a]) = fun b -> 
+"CPoint("^ (toString (x.get_x_coord()) False) ^ "," ^ (toString (x.get_y_coord()) False) ^ "," ^ (toString (x.get_colour()) False) ^")" 
+}
+
+class Circle [a] {
+centre : Point [Top];
+radius :Float;
+get_centre  = { |() -> !this.centre }
+set_centre = { fun x -> this.centre = x }
+get_radius = { |() -> !this.radius }
+set_radius  = { fun x -> this.radius = x }
+}
+
+
+
+class ColourCircle [a] extends Circle {
+col : Colour ;
+get_col = { |() -> !this.col }
+set_col  = { fun x -> this.col = x }
+get_centre = { |() -> 
+let res = new ColourPoint[] in 
+res.set_x_coord ((super.get_centre()).get_x_coord());
+res.set_y_coord ((super.get_centre()).get_y_coord());
+res.set_colour (this.get_col());
+res }
+}
+
+(* now get_centre has been specialised so that the centre of a
+coloured circle returns a coloured point whose colour is that of the
+circle, not any colour that the point might have had. *) 
+
+
+let x = new ColourCircle[] in 
+let p = new Point[] in 
+p.x_coord = -1.1;
+p.y_coord = 2.2;
+x.centre = p;
+x.col = blue;
+(!x.centre,x.get_centre());;
+
+(* returns 
+
+it: Point[Top] * ColourPoint[]
+it = (Point(-1.1,2.2),CPoint(-1.1,2.2,blue))
+
+The centre field is a mere point, but get_centre returns a colured point 
+
+The internal type of get_centre is 
+
+ColourCircle [a] -> Unit -> ColourPoint[] &  Circle [b] -> Unit -> Point[Top]
+
+When ColourCircle [a] and Circle [b] are unified then Unit ->
+ColourPoint[] is a sub-type of Unit -> Point[Top] so the
+specialisation relation holds.
+
+*) 
+
+

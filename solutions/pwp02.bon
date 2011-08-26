@@ -1,0 +1,125 @@
+(* examples from 
+
+	Recent Advances in Software Engineering
+	Lecture 2 
+	Lambda-calculus 
+*)
+
+(* 
+%open "pwp02.bon";;
+*)
+
+(* Here are osme examples of function definitions in bondi *) 
+
+let f (x) = x+1;;   
+let f x = x+1;;   
+f 3;;   
+fun x -> x + 1;;  
+let g = fun x -> x+1;;  
+g 3;;   
+
+(* 
+3 + True;; (* yields a type error *) 
+*)
+
+%hide types;;
+
+3 + True;; (* now yields an evaluation error, an exception *) 
+
+(* to re-introduce type checking, use *) 
+
+%show types;;
+
+(* Note that it is unsafe to switch off types in the middle of
+development. This mode will be disabled when checking your typed
+programming assignment. *) 
+
+(* the syntax @%show@ and @%hide@ is used for a variety of modes,
+mainly used in debugging the compiler. A complete listing of modes ,
+including some that are out of date, is in the source file consol.ml.
+Currently, they are
+
+let modes = ref [               (* list of string/default pairs *)
+  "concrete",   show_off;        (* make taged forms abstract *) 
+  "declaration", show_on;       (* do show type of declared entity *)
+  "echo",       show_off;       (* do not echo redirected standard input *)
+  "eval",       show_on;        (* evaluate *) 
+  "infer",      show_off;       (* do not display inferred term *)
+  "lintypes",   show_on;        (* show linearity of types *) 
+  "number",     show_off;       (* put line numbers on echoed lines *)
+  "parse",      show_off;       (* do not display parse trees *)
+  "prompt",     show_off;       (* do not show a prompt *)
+  "specialise", show_off;       (* hide specialisation details *) 
+  "types",      show_on         (* use types *) 
+] ;;
+
+ *)
+
+%hide types;;
+
+
+(* Church encoding of pairs *) 
+
+let pair x y  = fun f -> f x y;;
+
+let fst p = p (fun x y -> x);;
+let snd p = p (fun x y -> y);;
+
+
+let p1 = pair 3 4;;
+fst p1;;
+snd p1;;
+
+
+(* Church encoding of boolens and conditionals *) 
+
+let true = fun x y -> x ;;
+let false = fun x y -> y ;;
+let cond b x y = b x y ;;
+
+
+cond true 3 4;;
+cond false 3 4;;
+
+
+(* non-terminating terms. 
+
+First, you need to know how to stop them. Use Ctrl-C to stop
+evaluation. This will produce @Break ...@. 
+
+let omega x = x x ;;
+omega omega;;
+
+*) 
+
+(* fixpoints . One way of representing loops is by fixpoints.
+
+let omega2 f = fun x -> f x x;;
+let fix f = (omega2 f) (omega2 f);;
+
+
+*) 
+
+%show types;;
+
+
+let rec (fix: (a -> a) ->a) f = f (fix f);;
+ 
+let g h n = if n==0 then 1 else n* h(n-1) ;;
+
+
+
+(* the following example does not terminate
+
+let factorial = fix g;;
+
+
+
+ *) 
+
+(* the built-in fixpoints control evaluation order *) 
+
+let rec (factorial: Int -> Int) n = if n==0 then 1 else n* factorial (n-1) ;;
+
+
+factorial 5;;

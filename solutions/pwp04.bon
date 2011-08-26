@@ -1,0 +1,82 @@
+
+let (elim: lin (a -> b) -> b -> a) = fun x --> | {y} x y -> y;;
+
+datatype Tree a = Leaf of a | Node of Tree a and Tree a;;
+
+elim Leaf;;
+
+elim Leaf (Leaf 3);;
+
+(*
+let singleton x = [x];;
+(* an ordinary term *) 
+
+elim singleton;;
+
+(* fails because singleton is not a linear term  *) 
+
+*)
+
+
+lin singleton x = [x];;
+
+elim singleton;;
+
+
+elim singleton [3];;
+
+(* 
+
+elim singleton [3] reduces to (| {y} singleton y -> y) [3] 
+and to (| {y} Cons y Nil -> y) (Cons 3 Nil) 
+and to {3/y} y and to 3. 
+
+*)
+
+let rec (elim_all : lin (a -> a) -> a -> a) = fun x --> 
+| {y} x y -> elim_all x y 
+| y -> y
+;;
+
+elim_all (Cons 'a') ['b','a'];;
+elim_all (Cons 'a') ['a','b','a'];;
+elim_all (Cons 'a') ['a','a','a','a','b','a'];;
+
+
+
+
+elim_all (Node _) (Leaf 3);;
+
+let l  = Leaf ;;
+
+
+elim_all (Node _) (l 2);;
+
+elim_all (Node _) (Node  (l 1) (l 2));;
+
+elim_all (Node _) (Node  (l 1) (Node  (l 1) (l 2)));;
+
+
+
+
+(* Salaries or wages *)
+
+let twopercent x = x * 1.02;;
+
+
+datatype Salary2 = Salary2 of Float;;
+
+
+datatype Currency =  AUSD | EURO | USD | YUAN;;
+datatype Wage = Wage of Currency and Float ;;
+
+
+
+let incrWage f = | Wage c s -> Wage c (f s);;
+let incr_salary  = fun salary --> fun f ->  | {s} salary s -> salary (f s);;
+
+incr_salary Salary2 twopercent (Salary2 1.0);;
+incr_salary (Wage EURO) twopercent (Wage EURO 1.0);;
+
+
+

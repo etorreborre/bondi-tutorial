@@ -1,0 +1,64 @@
+let rec (member: a -> List a -> Bool) x = 
+ | [] -> False
+ | Cons y ys -> if x == y then True else member x ys 
+;;
+
+let rec (all_present : List a -> List b -> Bool) = 
+| [] -> fun ys -> True
+| Cons x xs -> fun ys -> if member x ys then all_present xs ys else False
+;;
+
+datatype Sets a = Sets of List a;;
+
+let rec (subset: Sets a -> Sets b -> Bool) = 
+  | Sets xs -> | Sets ys -> all_present xs ys;;
+
+datatype Set a = Set of List a 
+with toString += | Set xs -> "{" ^ (toString xs) ^ "}"
+and lessthanorequal += | (Set xs, Set ys) -> all_present xs ys
+and equal+= | (Set xs, Set ys) -> 
+    lessthanorequal (Set xs,Set ys) && lessthanorequal (Set ys,Set xs)
+;;
+
+class Name { 
+name : String;
+get_name = { | () -> !this.name }
+set_name = { fun n -> this.name = n }
+with toString += | (n:Name) -> n.get_name()
+}
+
+class Student extends Name {
+degree : String;
+get_degree = { |() -> !this.degree }
+set_degree = { fun d -> this.degree = d }
+with toString += | (s:Student) -> s.get_name() ^ " (" ^ s.get_degree() ^ ")"
+}
+
+let hong = new Student in 
+hong.set_name("Hong");
+hong.set_degree("MSc");
+hong;;
+
+class Point {
+x_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+better_test = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then this
+       else this }
+better = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then (this: Point)
+       else (that: Point) 
+(* better has type Point[a] -> Point[b] -> Point. 
+   The result type is Point = Point[Top], not Point[a] or Point[b] 
+   since either argument could be returned. 
+   This result type is a supertype of the natural types of the branches 
+   of the conditional, and so must be given explicitly. *)
+}
+ }
+
+
+"end of solution";;
+

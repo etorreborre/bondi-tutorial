@@ -1,0 +1,140 @@
+(*
+
+\Question 1
+
+Define append of lists by pattern-matching: 
+\begin{itemize}
+\item
+appending a Nil list to a list ys yields ys
+\item
+appending Cons x xs is to append xs and then Cons x. 
+\end{itemize}
+
+Check your answer by appending [1,2,3] and [4,5,6,7] and 
+appending [[1,2,3],[]] and [[4,5], [6,7,8]]
+
+*)
+
+let rec (append: List a -> List a -> List a) = 
+| Nil -> fun ys -> ys
+| Cons x xs -> fun ys -> Cons x (append xs ys) 
+;;
+
+append [1,2,3] [4,5,6,7] ;;
+append [[1,2,3],[]]  [[4,5], [6,7,8]];;
+
+
+(*
+
+\Question 2
+
+Define a function filter such that filter f xs produces the sublist of
+xs of those entries x of xs such that f x is True. For example, 
+
+\begin{verbatim}
+filter (fun x -> x/ 2 == 0) [1,2,3,4,5]
+\end{verbatim}
+ produces [2,4] and 
+\begin{verbatim}
+filter (fun x -> x != []) [[1,2,3], [], [5,6], []]
+\end{verbatim}
+produces [[1,2,3], [5,6]]
+
+*)
+
+let rec (filter : (a -> Bool) -> List a -> List a) f = 
+| [] -> []
+| Cons x xs -> if f x then Cons x (filter f xs) else filter f xs
+;;
+
+filter (fun x -> x/ 2 == 0) [1,2,3,4,5];;
+
+(* yields [1] *) 
+
+filter (fun x -> (x/ 2) * 2 == x) [1,2,3,4,5];;
+
+(* yields [2,4] *) 
+
+(* 
+\Question 3
+
+Define a datatype 
+
+Datatype Btree a = Leaf of a | Node of Btree a and Btree a;;
+
+of binary trees.  Define mapTree, foldleftTree and foldrightTree by analogy with mapTree, etc defined in the lecture. 
+Check your answers. 
+
+*)
+
+datatype Btree a = Leaf of a | Node of Btree a and Btree a;;
+
+let tree1 = Node (Leaf 3) (Leaf 4);;
+let tree2 = Node (Leaf "a") (Node (Leaf "b") (Leaf "c"));;
+
+
+let rec (mapTree: (a -> b) -> Btree a -> Btree b) f = 
+| Leaf x -> Leaf (f x) 
+| Node t1 t2 -> Node (mapTree f t1) (mapTree f t2) 
+;;
+
+mapTree (fun x -> x+1) tree1 ==  Node (Leaf 4) (Leaf 5);;
+mapTree (fun x -> 0) tree2 == Node (Leaf 0) (Node (Leaf 0) (Leaf 0));;
+
+
+let rec (foldleftTree: (a -> b -> a) -> a -> Btree b -> a) f x = 
+| Leaf y -> f x y
+| Node t1 t2 -> foldleftTree f (foldleftTree f x t1) t2
+;;
+
+foldleftTree (+) 0 tree1 == 7;;
+foldleftTree (^) "" tree2 == "abc";;
+
+let rec (foldrightTree: (a -> b -> b) -> Btree a -> b -> b) f = 
+| Leaf x -> f x 
+| Node t1 t2 -> fun y -> foldrightTree f t1 (foldrightTree f t2 y)
+;;
+
+foldrightTree (+) tree1 0 == 7;;
+foldrightTree (^) tree2 "" == "abc";;
+foldrightTree (-) tree1 0 == -1;;
+
+(*
+
+\Question 4
+
+Define the generic iterator that takes a function f, and integer n and an argument x and produces f (f ...(f x)) where f has been applied n times. 
+
+What is its type? 
+
+How can this be used to define a type N of natural numbers, analogous
+to the way that product types were defined in class?
+
+
+*)
+
+
+let rec (iterator: (a -> a) -> Int -> a -> a) f n x =
+if n <= 0 
+then x 
+else f (iterator f (n-1) x)
+;;
+
+
+datatype Nat = Nat of (all a. (a -> a) -> (a -> a));;
+
+let zero = Nat (fun f -> f);;
+let successor = | Nat g ->  Nat (fun f x -> f (g f x));;
+
+let natplus = | Nat g1 -> | Nat g2 -> Nat (fun f x -> g1 f (g2 f x));;
+
+
+(*
+\Question 5 
+
+Describe a possible project that you might attempt for the
+assignment (worth 40\% of your final mark). It could be  an appli-
+cation of the new polymorphism. It could be  an idea to improve
+bondi itself.
+
+*)

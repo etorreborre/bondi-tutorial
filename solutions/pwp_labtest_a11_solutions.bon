@@ -1,0 +1,224 @@
+
+(*
+Laboratory test for Programming with Patterns (16/05/11)
+
+Answer all questions by writing bondi programs in a file called
+pwp_lab_test.bon and attach it to an email to
+Barry.Jay@uts.edu.au with the subject header ``Laboratory test solutions for
+PWP'' and include your name and student number in the body of the
+mail. 
+
+There are three questions worth 10 marks each. 
+Feel free to use stubs of the form 
+
+let (missing_code : my_type) = Exception "missing_code";;
+
+to represent program fragments that you have not been able to complete. 
+
+
+
+Question 1 (10 marks) 
+~~~~~~~~~~~~~~~~~~~~
+
+Create a datatype for a mapping by 
+
+datatype Mapping a b = Map of (List (a *b))
+
+that can be used to find values of type b for keys of type a. 
+
+
+Define 
+
+(i) empty : Mapping a b					for the empty mapping
+(ii) add_value: a * b -> Mapping a b -> Mapping a b	to add a key-value pair to the mapping
+(iii) has_value: Mapping a b -> a -> Bool		to test for the existence of a value for a key 
+(iv) get_value: Mapping a b -> a -> b			to get the value for a key 
+(v) union: Mapping a b -> Mapping a b -> Mapping a b	to combine mappings so that values in the first 
+							argument dominate values in the second argument. 
+							[Hint: foldleft or foldright will help] 
+The associated tests are:
+
+let map1 = add_value (3,'c') (add_value (2,'b') (add_value (1,'a') empty));;
+let map2 = add_value (3,'f') (add_value (5,'e') (add_value (4,'d') empty)) ;;
+
+has_value empty 3 == False;;
+has_value map1 2 == True ;;
+has_value map1 5 == False;;
+
+get_value map1 2 == 'b';;
+get_value (union map2 map1) 3 == 'f';;
+
+*)
+
+datatype Mapping a b = Map of (List (a *b));;
+
+let empty = Map [];;
+
+let add_value kv = | Map kvs -> Map (Cons kv kvs);;
+
+let rec has_value = 
+| Map [] -> (fun x -> False)
+| Map (Cons (k,v) kvs) -> fun x -> if x == k then True else has_value (Map kvs) x
+;;
+
+let rec get_value = 
+| Map [] -> (fun x -> Exception "no such key")
+| Map (Cons(k,v) kvs) -> fun x -> if x ==k then v else get_value (Map kvs) x
+;;
+
+let union = | Map kvs -> foldright add_value kvs;;
+
+let map1 = add_value (3,'c') (add_value (2,'b') (add_value (1,'a') empty));;
+let map2 = add_value (3,'f') (add_value (5,'e') (add_value (4,'d') empty)) ;;
+
+has_value empty 3 == False;;
+has_value map1 2 == True ;;
+has_value map1 5 == False;;
+
+get_value map1 2 == 'b';;
+get_value (union map2 map1) 3 == 'f';;
+
+
+(*
+Question 2 (10 marks)
+~~~~~~~~~~~~~~~~~~~~
+
+(a) (5 marks) 
+
+Extend the definition of lessthan for Mapping by adding cases of the form 
+
+lessthan += | ....
+
+so that the order of the (first occurence of) a key does not
+matter. For example
+
+let map3 = add_value (2,'b') (add_value (3,'c') (add_value (1,'a') empty)) ;;
+let map4 = add_value (3,'f') map1;;
+
+
+map3 < map1;;
+not (map1 < map2);;
+not (map1 < map4);;
+map2 < union map2 map1;;
+not (map1 < union map2 map1);;
+
+*)
+
+lessthan += | (Map [], Map kvs2) -> True;;
+lessthan += | (Map (Cons (k,v) kvs1), Map kvs2) -> 
+		   has_value (Map kvs2) k && 
+		   (get_value (Map kvs2) k == v) && 
+		   (lessthan (Map kvs1,Map kvs2))
+;;
+
+
+let map3 = add_value (2,'b') (add_value (3,'c') (add_value (1,'a') empty)) ;;
+let map4 = add_value (3,'f') map1;;
+
+
+map3 < map1;;
+not (map1 < map2);;
+not (map1 < map4);;
+map2 < union map2 map1;;
+not (map1 < union map2 map1);;
+
+
+(*
+
+(b) (5 marks) 
+
+Modify the definition of Mapping above so that 
+
+printing the analogue of map1 yields
+
+Map([3 |-> 'c', 2|-> 'b',1 |-> 'a'])
+
+Hint: Define a datatype of key-value pairs
+
+datatype KeyValue a b = KV of a * b
+with toString += ...
+
+to print out 3 |-> 'c' etc. Then redefine Mapping to use KeyValue a b instead of a * b]
+. 
+*)
+
+datatype KeyValue a b = KV of a * b
+with toString += | KV(x,y) -> (toString x) ^"|->" ^ (toString y)
+;;
+
+datatype Mapping a b = Map of (List (KeyValue a b));;
+
+let mapkv1 = Map [KV(3,'c'), KV(2,'b'), KV(1,'a')];;
+
+
+(*
+
+Question 3 (10 marks)
+~~~~~~~~~~~~~~~~~~~~
+
+
+(a) (5 marks) 
+
+Here is a class of points. 
+
+class Point {
+x_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+move =  { | (d:Float) -> this.set_x_coord(this.get_x_coord() + d) } 
+ }
+
+Here is a datatype of colours.
+
+datatype Colour = Colour of Int;;
+
+
+Create a subclass of coloured points with a field that is a colour,
+including:
+
+(i) get- and set-methods for the new field.
+
+(ii) a specialisation of move for coloured points that behaves as
+follows: increase the colour by 1 and then apply the move method of the super-class.
+
+
+*)
+
+class Point {
+x_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+move =  { | (d:Float) -> this.set_x_coord(this.get_x_coord() + d) } 
+ }
+
+datatype Colour = Colour of Int;;
+
+class ColourPoint extends Point {
+colour : Colour ;
+get_colour = { |() -> !this.colour }
+set_colour = { fun d -> this.colour =  d }
+move =  { | (d:Float) -> this.set_colour(this.get_colour() + (Colour 1)); super.move(d)} 
+}
+
+
+
+(b) (5 marks) 
+
+Use the types Point_cty and CPoint_cty created in (a) above to write out definitions of the
+following types:
+
+Point 
+Point[]
+Point[a]
+Point[Top]
+Point[Unit]
+CPoint
+CPoint[]
+CPoint[a]
+CPoint[Top]
+CPoint[Unit]
+
+
+
+
+

@@ -1,0 +1,248 @@
+(*
+%open "pwp_labtest.bon";;
+
+*)
+
+(*
+
+Laboratory test for Programming with Patterns (13/05/09)
+
+Answer all questions by writing bondi programs in a file called
+pwp_lab_test.bon and attach it to an email to
+cbj@it.uts.edu.au with the subject header ``Laboratory test solutions for
+PWP'' and include your name and student number in the body of the
+mail. 
+
+There are three questions worth 10 marks each. 
+Feel free to use stubs of the form 
+
+let (missing_code : my_type) = Exception "missing_code";;
+
+to represent program fragments that you have not been able to complete. 
+
+
+
+Question 1 (10 marks) 
+~~~~~~~~~~~~~~~~~~~~
+
+(a) 5 marks 
+
+Create a function called member that checks to see if something is in a
+list, by completing the following definition:
+
+*)
+
+let rec (member: a -> List a -> Bool) x = 
+ | [] -> False
+ | Cons y ys -> if x == y then True else member x ys 
+;;
+
+
+(* ...
+
+Test your code on the following examples
+*)
+
+not(member 3 []);;
+member 3 [3];;
+member 3 [1,2,3,4,5,3];;
+not (member 'e' ['a','b','c','d']);;
+
+(*
+
+(b) (5 marks)
+
+Create a function called all_present that checks to see if every
+member of its first argument list is a member of its second
+argument. You may do this by completing the following definition:
+
+*)
+
+
+let rec (all_present : List a -> List b -> Bool) = 
+| [] -> fun ys -> True
+| Cons x xs -> fun ys -> if member x ys then all_present xs ys else False
+;;
+
+
+(*
+
+Test your code on the following examples
+*)
+
+all_present [] [1,2,3];;
+all_present [3,2,1,3] [1,2,3];;
+not (all_present ['e'] ['a','b','c','d']);;
+
+(*
+
+Question 2 (10 marks)
+~~~~~~~~~~~~~~~~~~~~
+
+(a) (5 marks)  
+
+Sets can be thought of as lists in which neither the order of elements
+nor the presence of repetitions makes a difference. One set is a
+subset of another if each element of the first is an element of the
+second.  Two sets are equal if each is a subset of the other. Define
+such a type by
+
+*)
+
+datatype Sets a = Sets of List a;;
+
+(*
+
+Now define subset inclusion by completing the definition of 
+
+*)
+
+let rec (subset: Sets a -> Sets b -> Bool) = 
+  | Sets xs -> | Sets ys -> all_present xs ys;;
+
+
+(*
+...
+
+Hint: use the function all_present developed in Question 1.
+
+Test your code on the following examples:
+*)
+
+subset (Sets []) (Sets [1,2,3]);;
+subset (Sets [3,2,1,3]) (Sets [1,2,3]);;
+not (subset (Sets ['e']) (Sets ['a','b','c','d']));;
+
+
+(*
+(b) (5 marks) 
+
+Redefine the datatype of sets to support special cases for some
+existing global functions, by completing
+
+*) 
+
+datatype Set a = Set of List a 
+with toString += | Set xs -> "{" ^ (toString xs) ^ "}"
+and lessthanorequal += | (Set xs, Set ys) -> all_present xs ys
+and equal+= | (Set xs, Set ys) -> 
+    lessthanorequal (Set xs,Set ys) && lessthanorequal (Set ys,Set xs)
+;;
+
+
+(*
+
+so that toString (Set [1,2,3]) yields the string "{[1,2,3]}"
+and lessthanorequal is given by subset inclusion
+and equal is given by the equality of sets.
+
+Test your code on the following examples. Most tests will involves
+functions defined using these functions, such as printing, (<=) and
+(==).
+
+*)
+
+toString (Set [1,2,3]);;
+Set [1,2,3];;  (* to see how toString is used in printing *) 
+(Set []) <= (Set [1,2,3]);;
+(Set [3,2,1,3]) <= (Set [1,2,3]);;
+(Set [3,2,1,3]) == (Set [1,2,3]);;
+
+
+
+(*
+
+Question 3 (10 marks)
+~~~~~~~~~~~~~~~~~~~~
+
+(a) Here is a class of names
+
+*)
+
+
+class Name { 
+name : String;
+get_name = { | () -> !this.name }
+set_name = { fun n -> this.name = n }
+with
+toString += | (n:Name) -> n.get_name()
+}
+
+let fred = new Name in 
+fred.set_name("Fred");
+fred;;
+
+(*
+
+Create a sub-class Student of Name with a string field for a degree,
+such as "BSc" or "MSc". Include methods for getting and setting a
+degree. Add a case to toString so that it prints the name string,
+followed by the degree string enclosed in brackets. Test this on an
+example, hong, whose name is "Hong" and whose degree is "MSc". 
+
+*)
+
+class Student extends Name {
+degree : String;
+get_degree = { |() -> !this.degree }
+set_degree = { fun d -> this.degree = d }
+with toString += | (s:Student) -> s.get_name() ^ " (" ^ s.get_degree() ^ ")"
+}
+
+let hong = new Student in 
+hong.set_name("Hong");
+hong.set_degree("MSc");
+hong;;
+
+
+
+(*
+
+(b) (5 marks)
+
+
+Here is a class definition  that has a type error in it. 
+
+class Point {
+x_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+better_test = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then this
+       else this }
+better = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then this
+       else that }
+ }
+
+Add type information to this class so that the error is eliminated.
+Write a comment in the code to explain what happened, and how you
+fixed it.
+
+*)
+
+class Point {
+x_coord : Float;
+get_x_coord = { |() -> !this.x_coord }
+set_x_coord = { fun d -> this.x_coord =  d }
+better_test = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then this
+       else this }
+better = { | (that:Point) -> 
+       if this.get_x_coord() <= that.get_x_coord()
+       then (this: Point)
+       else (that: Point) 
+(* better has type Point[a] -> Point[b] -> Point. 
+   The result type is Point = Point[Top], not Point[a] or Point[b] 
+   since either argument could be returned. 
+   This result type is a supertype of the natural types of the branches 
+   of the conditional, and so must be given explicitly. *)
+}
+ }
+
+
+"end of solution";;
+

@@ -1,0 +1,13 @@
+(*
+
+%open "manual_prelude.bon";;
+
+*)
+
+%cd "/usr/lib/bondi/prelude";;
+%open "printing.bon";;         (* basic printing *) 
+%open "imperatives_core.bon";; (* for-loops  and iterators *) 
+%open "structure_poly.bon";;   (* structure polymorphism *) 
+%open "datum2generic.bon" ;;   (* path polymorphism *) 
+%open "dynamic2static.bon";;   (* dynamic patterns *) 
+%open "queries.bon";;          (* pattern polymorphism *) 

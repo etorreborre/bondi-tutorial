@@ -1,0 +1,11 @@
+
+(* here are pattern-matching definitions of the compound calculus operators *) 
+
+%hide types;;
+
+
+let isPair = | x y -> True | x -> False;;
+let isEq  = | (x,y) -> if isPair x || isPair y then False else equal(x,y) ;;
+let car = | x y -> x;;
+let cdr = | x y -> y;;
+

@@ -1,0 +1,149 @@
+(*
+
+\Question 1
+
+Modify the  datatype declaration
+
+\[
+@datatype Btree a = Leaf of a | Node of Btree a and Btree a;;@
+\]
+so that @Leaf@ is printed as @L@ and @Node@ is not printed at all. For example, @Node (Leaf 3) (Leaf 4)@ prints as @(L 3)(L 4)@. 
+
+
+*)
+
+datatype Btree a = Leaf of a | Node of Btree a and Btree a
+with toString += | Leaf -> "L"
+and toString += | Node -> ""
+;;
+
+Node (Leaf 3) (Leaf 4);;
+
+
+(*
+\Question 2
+
+Modify the @lessthan@ relation on the binary trees above so that any node is bigger than any leaf. 
+
+Leaf 3 < Node (Leaf 1) (Leaf 1);;
+lessthan (Leaf 3, Node (Leaf 1) (Leaf 1));;
+
+datatype Btree a = Leaf of a | Node of Btree a and Btree a
+with toString += | Leaf -> "L"
+and toString += | Node -> ""
+and lessthan += | (Leaf _, Node _ _) -> True
+;;
+
+lessthan (Leaf 3, Node (Leaf 1) (Leaf 1));;
+Leaf 3 < Node (Leaf 1) (Leaf 1);;
+
+
+(*
+
+\Question 3
+
+Declare a datatype of lambda-terms by 
+\begin{program}
+@datatype Lambda =    Var of String@ \\
+@                   | Apply of Lambda and Lambda@ \\
+@                   | Lam of String and Lambda@
+\end{program}
+where the strings name the variables. Define a function 
+\[
+@freeVars:Lambda -> List String@ 
+\]
+that determines the free variables of a
+lambda-term, so that @str@ is not free in @Lam str e@.
+
+
+*)
+
+datatype Lambda =    Var of String 
+                   | Apply of Lambda and Lambda 
+                   | Lam of String and Lambda
+;;
+
+
+let rec (delete: a -> List a -> List a) x = 
+| [] -> []
+| Cons y ys -> if x == y then delete x ys else Cons y (delete x ys)
+;;
+
+
+let rec (freeVars: Lambda -> List String) = 
+| Var x -> [x]
+| Apply x y -> append (freeVars x) (freeVars y)
+| Lam x y -> delete x (freeVars y) 
+;;
+
+let lam1 = Lam "x" (Apply (Var "x") (Var "y"));;
+
+freeVars lam1 == ["y"];;
+
+(*
+
+\Question 4
+
+
+The function 
+\[
+@let ext (free: a -> List String) = select(is _Int)@ 
+\]
+will find all the strings in a data structure. Extend @free@ by a
+special case of @Lam@ so that it can generalise @freeVars@ of
+Question~3. Use this to modify the declaration of @Lambda@.
+
+*)
+
+(* let ext (free: a -> List String) = select(is _Int) 
+
+produces a type error *)
+
+
+let ext (free: a -> List String) = select(is _String);;
+
+free lam1 == ["x","x","y"];;
+
+free += | Lam x y -> delete x (free y);;
+
+free lam1 == ["y"];;
+
+(*
+
+\Question 5
+
+Define a special case of the function @equal@ for arrays, beginning 
+\[
+@equal += | ((x as _array),(y as _array))  -> @
+\]
+Hint: Check out imperatives\_core.bon in the standard prelude. 
+
+*)
+
+equal += | ((x as _array),(y as _array))  -> 
+	let xn = lengthv x 
+	and yn = lengthv y in 
+	if xn == yn 
+	then 
+	let b = Ref True in 
+	forall 0 (yn minusint 1) 
+	    (fun i -> 
+		if equal (!(entry(y,i)), !(entry(x,i))) 
+		then () else 
+		b = False);
+	!b
+	else False
+;;
+
+let x = newarray 4.3 5 ;;
+
+x == x;;
+
+let y = newarray 4.3 7 ;;
+
+not (x == y) ;;
+not (y == x) ;;
+
+
+let z = newarray 1.0 5;;
+not (x ==z);;
