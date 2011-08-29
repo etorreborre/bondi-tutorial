@@ -1,0 +1,82 @@
+let rec (append: List a -> List a -> List a) = 
+| Cons x y -> fun ys -> Cons x (append y ys)
+| Nil      -> fun ys -> ys
+;;
+
+let isEven x = x / 2 * 2 == x;;
+isEven 3;;
+isEven 4;;
+ 
+let rec (select: a -> List a -> List a -> List a) f  = fun xs ->
+  if (isPair xs) then
+    let head = (cdr (car xs)) in 
+    if (f head) then
+      Cons head (select f (cdr xs))
+    else
+      select f (cdr xs)
+  else
+    Nil
+;;
+ 
+select isEven [];;
+select isEven [1, 2, 3, 4];;
+
+let rec (update: a -> a -> List a -> List a) f  = fun xs ->
+  if (isPair xs) then
+    let head = (cdr (car xs)) in 
+    Cons (f head) (update f (cdr xs))
+  else
+    Nil
+;;
+
+let plus1 x = x + 1;;
+   
+select isEven (update plus1 [1, 2, 3, 4, 5]);;
+   
+let isList xs = 
+ if (isPair xs) then
+   if (isPair (car xs)) then
+     (car (car xs) == Cons) || (xs == Nil)
+   else
+     False
+ else
+   False
+;;    
+   
+isList (1, 2);;   
+isList [1, 2, 3];;   
+isList [[1, 2], (3, 4)];;   
+   
+select isList [1,2,3,4,5];;
+select isList ([1,2,3], [4,5]);;
+ 
+let rec (select2: a -> List a -> List a -> List a) f  = fun xs ->
+  if (isPair xs) then
+    let head = (cdr (car xs)) in 
+    let result = 
+      if (f head) then
+        Cons head (select2 f (cdr xs))
+      else
+        select f (cdr xs)
+    in
+      append (select2 f head) result
+  else
+    Nil
+;;
+  
+select2 isList [[1,2, [3, 4]], [5]];;
+  
+let rec (update2: a -> a -> List a -> List a) f  = fun xs ->
+  if (isPair xs) then
+    let head = (cdr (car xs)) in 
+      if (isPair head) then
+        append [(update2 f head)] (update2 f (cdr xs))
+      else
+        Cons (f head) (update2 f (cdr xs))
+  else
+    Nil
+;;
+
+update2 plus1 [[3]];;
+update2 plus1 [[[1, 2], [3], [4, 5, [6]]], 7];;
+
