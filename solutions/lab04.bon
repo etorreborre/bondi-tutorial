@@ -1,0 +1,102 @@
+(*
+{3/x}(\y -> y x)    =>  \y -> y 3
+{3/x}(x -> y x)     =>  \y -> y x
+{y/x}(y -> y x)     =>  \z -> z y
+(x -> y -> y x)) 3  =>  \y -> y 3
+(x -> (x -> y x)) 3 => \x -> y x
+(x -> y -> y x) y   => \z -> z y
+(Leaf -> 4) Leaf    => 4
+(Leaf -> 4) Nil     => MatchError
+(Pair x y -> x + y) (Pair 3 4) => 7
+(Nil -> true | Cons x y -> false) (Cons 3 Nil) => false
+*)
+
+
+let first  = | Pair a b -> a;;
+let second = | Pair a b -> b;;
+
+
+let head = | Cons x y -> x;;
+let tail = | Cons x y -> y;;
+
+
+let car = | x y -> x;;
+let cdr = | x y -> y;;
+
+
+let ext (size: a -> Int) = 
+| x y -> 1 + (size y)
+| x   -> 1
+;;
+
+
+size [1, 2, 3];;
+
+
+(* binary tree definition *)
+datatype Tree s = Leaf of s | Node of Tree s and Tree s
+with 
+    size += | Leaf s -> 1
+and size += | Node x y -> size x + size y;;
+
+
+size (Leaf 1);;
+
+let tree1 = Node Leaf 1 Leaf 2;;
+let tree2 = Node Leaf 3 Leaf 4;;
+size tree1;;
+
+
+let largest =
+| Leaf s as t -> t
+| Node x y    -> if (size x > size y) then x else y
+;;
+
+
+let tree3 = Node tree2 (Node Leaf 1 tree1);;
+largest tree3;;
+
+let plus1 = 
+| _Int as x -> x + 1
+| other -> other
+;;
+
+(* increase all integers by 1 *)
+let increment1 = apply2all plus1;;
+
+increment1 tree1;;
+increment1 tree2;;
+
+(* list all substructures whose size is at least 10 *)
+let select_size10 = select (fun x -> size x >= 10);;
+select_size10 tree3;;
+
+(* list all substructures whose size is at least n where n is a parameter *)
+let select_size n = select (fun x -> size x >= n);;
+select_size 2 tree3;;
+
+(* Write a program that increments all employee salaries within an arbitrary structure, while leaving all other integers unchanged *)
+
+datatype Employee = Employee of String * Int;;
+
+let raise_employee r = 
+| Employee n s -> Employee n (s + r)
+| other        -> other
+;;
+
+let give_a_raise n = apply2all (raise_employee n);;
+
+let homer = Employee "Homer" 100;;
+let bob   = Employee "Bob" 120;;
+let marge = Employee "Marge" 200;;
+let jane  = Employee "Jane" 240;;
+let boss  = Employee "Boss" 500;;
+
+let department1 = Node Leaf homer Leaf bob;;
+let department2 = Node Leaf marge Leaf jane;;
+
+let company = Node department2 (Node boss department1);;
+
+give_a_raise 50 company;;
+
+
