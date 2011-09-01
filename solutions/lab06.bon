@@ -1,0 +1,26 @@
+let plus_one = fun x -> x + 1;;
+let plus_onedot = fun x -> x + 1.0;;
+let plus_onepair = fun x -> x + (1, 2.2);;
+
+3 plusint 4;;
+3.3 plusfloat 4.4;;
+fun x y -> x plusint y;;
+fun x y -> x plusfloat y;;
+fun x y -> x + y;;
+
+datatype Pair a b = Pair of a and b;;
+
+let car: Pair a b -> a = | Pair x y -> x;;
+let cdr: Pair a b -> b = | Pair x y -> y;;
+let addInt: Pair Int Int -> Int = | Pair x y -> x plusint y;;
+let addFloat: Pair Float Float -> Float = | Pair x y -> x plusfloat y;;
+let add: Pair a a -> a = | Pair x y -> x + y;;
+let addMore: Pair Int Int -> Int = 
+| Pair 0 y -> y 
+| Pair x y -> x + y + 1
+;;
+
+let addMoreList: List Int -> Int = 
+| Nil -> 0 
+| Cons 2 y -> 1
+;;

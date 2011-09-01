@@ -1,0 +1,54 @@
+(* Write these out without any lambda
+1. elim = \x.x \y -> y *)
+
+let elim = 
+| x -> | y -> y
+;;
+elim 1 2;;
+
+(* 2. equal = \x. x -> true
+| \y.false
+*)
+
+let equal x = 
+| {} x -> True
+| y -> False
+;;
+equal 1 1;;
+equal 1 2;;
+
+(* 3. elim* = \x. 
+    x \y -> elim* y
+  | \y -> y 
+*)
+ 
+let rec (elimstar) = fun (x: lin a) ->
+| {y} x y -> elimstar x y
+| y -> y
+;;
+
+datatype Boxed a = Box of a | Box of Boxed;;
+let boxed = Box 1;;
+elimstar Box boxed;;
+
+let nested_boxes = Box (Box (Box 1));;
+elimstar Box nested_boxes;;
+
+elim Leaf (Leaf 3);;
+elim Leaf (Node 3);;
+equal Nil Nil;;
+equal (Cons 3 Nil) (Cons 3 Nil);;
+equal Nil (Cons 3 Nil);;
+equal (fun x -> x) (fun x -> x);;
+elimstar Leaf (Leaf 4);;
+elimstar Leaf (Pair (Leaf 4) (Leaf 5));;
+elimstar Leaf (Leaf (Leaf 4));;	
+
+let rec update_c = fun (x: lin a) -> fun f ->
+| {y} x y -> x (f y)
+| y z -> (update_c x f y) (update_c x f z)
+| y -> y
+;;
+ 
+update_c Leaf (fun x -> x + 1) (Pair (Leaf 4) (Leaf 5));;
+update_c Box (update_c Leaf (fun x -> x + 1)) (Pair (Box (Leaf 4)) (Leaf 5));;
